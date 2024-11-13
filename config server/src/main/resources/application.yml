@@ -1,0 +1,12 @@
+server:
+  port: 8888 # Укажите порт для Config Server, обычно используется 8888
+
+spring:
+  application:
+    name: config-server # Уникальное имя для Config Server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/Airat163/finance-configurations.git # Укажите URL вашего репозитория с конфигурационными файлами
+          clone-on-start: true # (опционально) клонирует репозиторий при запуске

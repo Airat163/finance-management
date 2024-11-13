@@ -7,21 +7,21 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="transaction_service" />
-        <module name="notification_service" />
-        <module name="config_server" />
-        <module name="reporting_service" />
-        <module name="account_service" />
+        <module name="config-server" />
+        <module name="reporting-service" />
+        <module name="transaction-service" />
+        <module name="account-service" />
+        <module name="notification-service" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="account_service" options="-parameters" />
-      <module name="config_server" options="-parameters" />
-      <module name="notification_service" options="-parameters" />
-      <module name="reporting_service" options="-parameters" />
-      <module name="transaction_service" options="-parameters" />
+      <module name="account-service" options="-parameters" />
+      <module name="config-server" options="-parameters" />
+      <module name="notification-service" options="-parameters" />
+      <module name="reporting-service" options="-parameters" />
+      <module name="transaction-service" options="-parameters" />
     </option>
   </component>
 </project>
