@@ -2,12 +2,14 @@ package com.example.account_service.controller;
 
 import com.example.account_service.model.Account;
 import com.example.account_service.service.AccountService;
+import com.example.account_service.service.AccountServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -45,5 +47,11 @@ public class AccountController {
     public ResponseEntity<List<Account>> getAllAccounts() {
         List<Account> accounts = accountService.getAllAccounts();
         return ResponseEntity.ok(accounts);
+    }
+
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<List<Map<String, Object>>> getAccountTransactions(@PathVariable Long id) {
+        List<Map<String, Object>> transactions = accountService.getTransactionsForAccount(id);
+        return ResponseEntity.ok(transactions);
     }
 }

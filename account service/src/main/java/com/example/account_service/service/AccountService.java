@@ -4,6 +4,7 @@ import com.example.account_service.model.Account;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface AccountService {
@@ -12,5 +13,7 @@ public interface AccountService {
     Account updateAccountBalance(Long accountId, BigDecimal amount);
     void deleteAccount(Long accountId);
     List<Account> getAllAccounts();
+
+    List<Map<String, Object>> getTransactionsForAccount(Long id);
 }
 

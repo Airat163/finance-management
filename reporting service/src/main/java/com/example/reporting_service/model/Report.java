@@ -1,12 +1,11 @@
 package com.example.reporting_service.model;
 
-import com.example.account_service.model.Account;
-import com.example.transaction_service.model.Transaction;
+
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
-import java.util.List;
+
 
 @Entity
 @Table(name = "reports")

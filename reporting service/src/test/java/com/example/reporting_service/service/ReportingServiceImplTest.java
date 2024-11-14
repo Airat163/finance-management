@@ -1,12 +1,9 @@
 package com.example.reporting_service.service;
 
-import com.example.account_service.model.Account;
-import com.example.account_service.service.AccountService;
+import com.example.reporting_service.exception.ReportGenerationException;
 import com.example.reporting_service.model.Report;
 import com.example.reporting_service.repository.ReportRepository;
-import com.example.transaction_service.model.Transaction;
-import com.example.transaction_service.service.TransactionService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.reporting_service.service.ReportingServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,47 +11,99 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ReportingServiceImplTest {
 
     @Mock
-    private AccountService accountService;
+    private RestTemplate restTemplate;
 
     @Mock
-    private TransactionService transactionService;
-
-    @Mock
-    private ObjectMapper objectMapper;
-
-    @Mock
-    private ReportRepository reportRepository; // Добавляем мок для ReportRepository
+    private ReportRepository reportRepository;
 
     @InjectMocks
     private ReportingServiceImpl reportingService;
 
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     @Test
-    void testGenerateAccountReport() throws Exception {
-        Account account = new Account(1L, 1L, BigDecimal.valueOf(1000), "USD", new Date());
-        when(accountService.getAccountById(anyLong())).thenReturn(Optional.of(account));
-        when(transactionService.getTransactionsByAccountId(anyLong())).thenReturn(Collections.emptyList());
-        when(objectMapper.writeValueAsString(any())).thenReturn("test_data");
+    void testGenerateAccountReport_Success() {
+        // URL для accountService
+        String accountUrl = "http://account-service/accounts/1";
 
-        // Добавьте поведение для save, если оно потребуется
-        when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        // Мок данных аккаунта
+        Map<String, Object> mockAccountData = new HashMap<>();
+        mockAccountData.put("userId", 1L);  // Необходимое поле userId для успешного теста
+        ResponseEntity<Map<String, Object>> accountResponseEntity = ResponseEntity.ok(mockAccountData);
 
+        // Настройка RestTemplate для возврата accountResponseEntity
+        when(restTemplate.exchange(
+                eq(accountUrl),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(accountResponseEntity);
+
+        // URL для transactionService
+        String transactionsUrl = "http://transaction-service/transactions/account/1";
+
+        // Мок данных транзакций
+        List<Map<String, Object>> mockTransactionData = new ArrayList<>();
+        mockTransactionData.add(new HashMap<>()); // Пример пустого объекта для транзакций
+        ResponseEntity<List<Map<String, Object>>> transactionsResponseEntity = ResponseEntity.ok(mockTransactionData);
+
+        // Настройка RestTemplate для возврата transactionsResponseEntity
+        when(restTemplate.exchange(
+                eq(transactionsUrl),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenReturn(transactionsResponseEntity);
+
+        // Мок сохранения в репозитории
+        Report mockReport = new Report(1L, "ACCOUNT_REPORT", new Date(), "{}");
+        when(reportRepository.save(any(Report.class))).thenReturn(mockReport);
+
+        // Вызов тестируемого метода
         Report report = reportingService.generateAccountReport(1L);
 
+        // Проверка результата
         assertNotNull(report);
-        verify(accountService, times(1)).getAccountById(1L);
-        verify(transactionService, times(1)).getTransactionsByAccountId(1L);
-        verify(reportRepository, times(1)).save(any(Report.class));
+        assertEquals("ACCOUNT_REPORT", report.getReportType());
+        assertEquals(1L, report.getUserId());
+    }
+
+
+    @Test
+    void testGenerateAccountReport_Fallback() {
+        // Мокируем вызов RestTemplate для Account, который выбросит исключение
+        String accountUrl = "http://account-service/accounts/1";
+        when(restTemplate.exchange(
+                eq(accountUrl),
+                eq(HttpMethod.GET),
+                eq(null),
+                any(ParameterizedTypeReference.class)
+        )).thenThrow(new RuntimeException("Service unavailable"));
+
+        // Проверяем, что метод выбрасывает ReportGenerationException
+        assertThrows(ReportGenerationException.class, () -> reportingService.generateAccountReport(1L));
     }
 }
+
